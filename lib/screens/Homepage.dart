@@ -4,13 +4,51 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:internproject/screens/section2.dart';
 import 'package:internproject/widgets/Listcard.dart';
 import 'package:internproject/widgets/Transparentbutton.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
+import '../models/LessonModel.dart';
+import '../models/ProgramsModel.dart';
 import '../utils.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
   
+  const HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  Future<ProgramsModel> fetchDataFromInternet() async {
+  final url = 'https://632017e19f82827dcf24a655.mockapi.io/api/programs';
+
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    return ProgramsModel.fromJson(json.decode(response.body));
+  } else {
+    throw Exception('Failed to load data from the internet');
+  }
+}
+Future<LessonsModel> fetchLessonsDataFromInternet() async {
+  final url = 'https://632017e19f82827dcf24a655.mockapi.io/api/lessons';
+
+  final response = await http.get(Uri.parse(url));
+
+  if (response.statusCode == 200) {
+    return lessonsModelFromJson(response.body);
+  } else {
+    throw Exception('Failed to load data from the internet');
+  }
+}
+@override
+  void initState() {
+    super.initState();
+    fetchDataFromInternet();
+    fetchLessonsDataFromInternet();
+  }
+  
   @override
   Widget build(BuildContext context) {
   List<String>  imageslist=[ 'assets/page-1/images/frame-122.png',  'assets/page-1/images/.png','assets/page-1/images/young-woman-doing-natarajasana-exercise-4.png','assets/page-1/images/frame-122.png'];
@@ -154,29 +192,40 @@ Section2(),
                                      
                                      
                                      ) ])),
-  
-    
-       SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: 320,
-         child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              shrinkWrap: true,
-              itemCount: imageslist.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Row(
-                  children: [
+  SizedBox(
+     width: MediaQuery.of(context).size.width,
+        height: 300,
+    child: FutureBuilder<ProgramsModel>(
+          future: fetchDataFromInternet(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
+              List<Item> programs = snapshot.data!.items;
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: programs.length,
+                itemBuilder: (context, index) {
+                     return 
                     ListCard(
-                      path: imageslist[index],
-                      title1: titleslist[index][0],
-                      title2: titleslist[index][1],
-                      title3: titleslist[index][2],
-                    ),
-               SizedBox(width: 20,)   ],
-                );
-              },
-            ),
-       ),
+                      path: imageslist[0],
+                      title1: programs[index].category,
+                      title2: programs[index].name,
+                      title3: programs[index].lesson.toString()+" lessons",
+                    );
+                  
+                  
+                
+                },
+              );
+            }
+          },
+        ),),
+ 
+    
+      
      
 Container(padding: EdgeInsets.only(top: 20),
                                   
@@ -189,7 +238,7 @@ Container(padding: EdgeInsets.only(top: 20),
                                           
                                     
                                           child: Text(
-                                            'Events and Experiences',
+                                            'Lesson api data',
                                             style: SafeGoogleFont (
                                               'Lora',
                                               fontSize: 18*ffem,
@@ -224,31 +273,42 @@ Container(padding: EdgeInsets.only(top: 20),
   
      SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-       child: SizedBox(
-        width: MediaQuery.of(context).size.width,
+       child:   SizedBox(
+     width: MediaQuery.of(context).size.width,
         height: 320,
-         child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              shrinkWrap: true,
-              itemCount: imageslist.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Row(
-                  children: [
+    child: FutureBuilder<LessonsModel>(
+          future: fetchLessonsDataFromInternet(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
+              List<LessonItem> programs = snapshot.data!.items;
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: programs.length,
+                itemBuilder: (context, index) {
+                     return 
                     ListCard(
-                      path: imageslist[index],
-                      title1: titleslist[index][0],
-                      title2: titleslist[index][1],
-                      title3: titleslist[index][2],
-                    ),
-               SizedBox(width: 20,)   ],
-                );
-              },
-            ),
-       ),
+                      path: imageslist[2],
+                      title1: programs[index].category,
+                      title2: programs[index].name,
+                      title3: "duration :"+programs[index].duration.toString()+"minitues",
+                    );
+                  
+                  
+                
+                },
+              );
+            }
+          },
+        ),),
      ),
 
   
-          ]))),
+     
+     ]))),
     );
   }
 }
